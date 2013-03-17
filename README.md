@@ -1,6 +1,28 @@
 # MessageHub.js
 
 MessageHub is a singleton class to subscribe and publish messages.
+Each subscription return a subscription object which gives some control.
+
+## API
+
+### MessageHub
+
+#### subscribe / on (subject, listener[, once])
+Subscribe a listener to a subject
+returns a Subscript object
+
+#### unsubscribe / un (subject[, uid])
+Unsubscribe listener
+
+#### publish / emit (subject, data)
+Publish a message
+
+#### publishToAll / spam (subject, data)
+Publish a message to ALL listeners
+
+### Subscription
+
+pause, resume, remove, before, after, setListener, setSubject
 
 ## Usage
 

@@ -1,11 +1,3 @@
-# MessageHub.js
-
-MessageHub is a singleton class to subscribe and publish messages.
-
-## Usage
-
-```javascript
-
 var subscription = MessageHub.subscribe('test', function(subject, data) {
 		console.log(subject, data);
 	}),
@@ -79,4 +71,9 @@ subscription.before(function(subject) {
 MessageHub.spam('spam', {spam:true});
 MessageHub.emit('new', dummyData);
 
-```
+
+
+
+
+
+

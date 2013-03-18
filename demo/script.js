@@ -71,7 +71,7 @@ subscription.before(function(subject) {
 MessageHub.spam('spam', {spam:true});
 MessageHub.emit('new', dummyData);
 
-
+console.log(MessageHub.instance());
 
 
 

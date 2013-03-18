@@ -20,9 +20,13 @@ Publish a message
 #### publishToAll / spam (subject, data)
 Publish a message to ALL listeners
 
-### Subscription
+### Subscription object
 
-pause, resume, remove, before, after, setListener, setSubject
+pause, resume, remove, before, after, setListener, setSubject, getListener, getSubject
+
+### Message object
+
+getSubject, getData, getTimestamp, getUid
 
 ## Usage
 

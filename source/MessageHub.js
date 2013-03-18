@@ -1,18 +1,33 @@
-(function() {
+(function(MessageHub) {
 
 	// Hub class
 	var Hub = function() {
+	
 		this.subjects = {};
-		this._uid = 0;
+		this.uid = 0;
+		
+		/*
+		this.stack = [];
+		
+		setInterval(function() {
+		
+			if (!this.stack[0]) return;
+			
+			this.stack[0].listener.apply(this.stack[0].subscription, this.stack[0].args);
+			this.stack.splice(0, 1);
+			
+		}.bind(this), 0);
+		*/
 	};
 
-	Hub.prototype.subscribe = Hub.prototype.on = function(subject, listener, once) {
+	Hub.prototype.subscribe = 
+	Hub.prototype.on = function(subject, listener, once) {
 	
 		var subscription;
 		
 		if (!this.subjects[subject]) this.subjects[subject] = [];
 		subscription = new Subscription(subject, listener, this, once);
-		subscription._uid = this._uid++;
+		subscription._uid = this.uid++;
 		this.subjects[subject].push(subscription);
 		
 		return subscription;
@@ -22,7 +37,8 @@
 		return this.on(subject, listener, true);
 	};
 
-	Hub.prototype.unsubscribe = Hub.prototype.un = function(subject, uid) {
+	Hub.prototype.unsubscribe = 
+	Hub.prototype.un = function(subject, uid) {
 	
 		var items, len, i;
 		
@@ -51,17 +67,18 @@
 		};
 	};
 
-	Hub.prototype.publish = Hub.prototype.emit = function(subject, data) {
+	Hub.prototype.publish = 
+	Hub.prototype.emit = function(subject, data) {
 	
 		if (this.subjects[subject]) {
-		
 			this.subjects[subject].forEach(function(subscription) {
 				subscription.execute(subject, data);
 			});
 		};
 	};
 
-	Hub.prototype.publishToAll = Hub.prototype.spam = function(subject, data) {
+	Hub.prototype.publishToAll = 
+	Hub.prototype.spam = function(subject, data) {
 	
 		for (var sub in this.subjects) {
 			this.subjects[sub].forEach(function(subscription) {
@@ -93,10 +110,16 @@
 			if (this.listener && this._listening) {
 			
 				this.listener.apply(this, [subject, data]);
+				/*
+				this._hub.stack.push({
+					subscription: this,
+					listener: this.listener,
+					args: [subject, data]
+				});
+				*/
 				
-				if (this._once) {
-					this._hub.un.apply(this._hub, [this.subject, this._uid]);
-				};
+				// if once unsubcribe straight away
+				if (this._once) this._hub.un(this.subject, this.uid);
 			};
 			
 			if (this._after) this._after.apply(this, [subject, data]);
@@ -127,14 +150,6 @@
 		return this;
 	};
 	
-	Subscription.prototype.setListener = function(listener) {
-		return this.set("listener", listener);
-	};
-	
-	Subscription.prototype.setSubject = function(subject) {
-		return this.set("subject", subject);
-	};
-	
 	Subscription.prototype.set = function(key, value) {
 	
 		if (key !== "subject" && key !== "listener") {
@@ -150,8 +165,52 @@
 		
 		return this;
 	};
+	
+	// generate setter/getter for public properties only
+	['subject','listener'].forEach(function(key) {
+	
+		(function(method, key) {
+		
+			Subscription.prototype["set" + method] = function(value) {
+				return this.set(key, value);
+			};
+			
+			Subscription.prototype["get" + method] = function(value) {
+				return this[key];
+			};
+			
+		})(firstUp(key), key);
+	});
+	
+	// Message class
+	var Message = function(subject, data, uid) {
+		this.data = data || null;
+		this.subject = subject || null;
+		this.timestamp = new Date().getTime();
+		this.uid = uid;
+	};
+	
+	// build message getter methods
+	['data', 'subject', 'timestamp', 'uid'].forEach(function(key) {
+		(function(method, key) {
+			Message.prototype["get" + method] = function() {
+				return this[key];
+			};
+		})(firstUp(key), key);
+	});
+	
+	// e.g subject => Subject
+	function firstUp(str) {
+		var len = str.length;
+		return str.substring(0, 1).toUpperCase() + str.substring(1, len);
+	};
 
 	// Singleton and exposure
 	window.MessageHub = MessageHub = new Hub();
+	
+	// Allow creation of other instance
+	MessageHub.instance = function() {
+		return new Hub();
+	};
 
 })();

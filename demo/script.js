@@ -1,5 +1,5 @@
 var subscription = MessageHub.subscribe('test', function(subject, data) {
-		console.log(subject, data);
+		console.log(subject);
 	}),
 	dummyData = {
 		foo:'foo'
@@ -72,6 +72,14 @@ MessageHub.spam('spam', {spam:true});
 MessageHub.emit('new', dummyData);
 
 console.log(MessageHub.instance());
+
+MessageHub.useMsgObj = true;
+
+MessageHub.once('once', function(msgObj) {
+	console.log(msgObj);
+});
+
+MessageHub.emit('once', {once:true});
 
 
 

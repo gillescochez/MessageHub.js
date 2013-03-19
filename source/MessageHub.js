@@ -1,3 +1,5 @@
+'use strict';
+
 (function(MessageHub) {
 
 	// Hub class
@@ -5,21 +7,9 @@
 	
 		this.subjects = {};
 		this.uid = 0;
-		
-		/*
-		this.stack = [];
-		
-		setInterval(function() {
-		
-			if (!this.stack[0]) return;
-			
-			this.stack[0].listener.apply(this.stack[0].subscription, this.stack[0].args);
-			this.stack.splice(0, 1);
-			
-		}.bind(this), 0);
-		*/
+		this.useMsgObj = false;
 	};
-
+	
 	Hub.prototype.subscribe = 
 	Hub.prototype.on = function(subject, listener, once) {
 	
@@ -28,6 +18,7 @@
 		if (!this.subjects[subject]) this.subjects[subject] = [];
 		subscription = new Subscription(subject, listener, this, once);
 		subscription._uid = this.uid++;
+		if (this.useMsgObj) subscription.useMsgObj = true;
 		this.subjects[subject].push(subscription);
 		
 		return subscription;
@@ -40,8 +31,6 @@
 	Hub.prototype.unsubscribe = 
 	Hub.prototype.un = function(subject, uid) {
 	
-		var items, len, i;
-		
 		if (this.subjects[subject]) {
 		
 			if (!uid) {
@@ -50,15 +39,9 @@
 				return;
 			};
 		
-			items = this.subjects[subject];
-			len = items.length;
-			i = 0;
-			
-			for (; i < len; i++) {
-				if (items[i]._uid === uid) {
-					items.splice(i, 1);
-				};
-			};
+			this.subjects[subject].forEach(function(item, i) {
+				if (item._uid === uid) items.splice(i, 1);
+			}, this);
 			
 			if (this.subjects[subject].length < 1) {
 				this.subjects[subject] = null;
@@ -80,9 +63,17 @@
 	Hub.prototype.publishToAll = 
 	Hub.prototype.spam = function(subject, data) {
 	
+		var ids = [];
+		
 		for (var sub in this.subjects) {
+		
 			this.subjects[sub].forEach(function(subscription) {
-				subscription.execute(subject, data, true);
+			
+				if (!ids[subscription._uid]) {
+				
+					subscription.execute(subject, data, true);
+					ids[subscription._uid] = true;
+				};
 			});
 		};
 	};
@@ -92,37 +83,38 @@
 	
 		this.subject = subject;
 		this.listener = listener;
+		this.useMsgObj = false;
 		
 		this._listening = true;
-		this._once = once;
-		this._hub = hub;
 		this._before = null;
 		this._after = null;
 		this._uid = null;
+		
+		this._once = once;
+		this._hub = hub;
 	};
 	
 	Subscription.prototype.execute = function(subject, data, force) {
 	
 		if (force || this.subject === subject) {
 			
-			if (this._before) this._before.apply(this, [subject, data]);
-			
 			if (this.listener && this._listening) {
 			
-				this.listener.apply(this, [subject, data]);
-				/*
-				this._hub.stack.push({
-					subscription: this,
-					listener: this.listener,
-					args: [subject, data]
-				});
-				*/
-				
-				// if once unsubcribe straight away
-				if (this._once) this._hub.un(this.subject, this.uid);
-			};
+				var args;
 			
-			if (this._after) this._after.apply(this, [subject, data]);
+				if (this.useMsgObj) args = [new Message(subject, data, this._uid)];
+				else args = [subject, data]
+				
+				if (this._once) this._hub.un(subject, this.uid);
+				if (this._before) this._before.apply(this, args);
+				
+				// we check again here as the before function could affect the properties
+				if (this.listener && this._listening) {
+					this.listener.apply(this, args);
+				};
+				
+				if (this._after) this._after.apply(this, args);
+			};
 		};
 	};
 	
@@ -152,13 +144,13 @@
 	
 	Subscription.prototype.set = function(key, value) {
 	
-		if (key !== "subject" && key !== "listener") {
-			throw "Subscription illegal setter key: " + key;
+		if (key !== 'subject' && key !== 'listener' && key !== 'useMsgObj') {
+			throw 'Subscription illegal setter key: ' + key;
 		};
 		
 		this[key] = value;
 		
-		if (key === "subject") {
+		if (key === 'subject') {
 			if (!this._hub.subjects[value]) this._hub.subjects[value] = [];
 			this._hub.subjects[value].push(this);
 		};
@@ -167,15 +159,16 @@
 	};
 	
 	// generate setter/getter for public properties only
-	['subject','listener'].forEach(function(key) {
+	['subject', 'listener', 'useMsgObj'].forEach(function(key) {
 	
 		(function(method, key) {
 		
-			Subscription.prototype["set" + method] = function(value) {
-				return this.set(key, value);
+			Subscription.prototype['set' + method] = function(value) {
+				this.set(key, value);
+				return this;
 			};
 			
-			Subscription.prototype["get" + method] = function(value) {
+			Subscription.prototype['get' + method] = function(value) {
 				return this[key];
 			};
 			
@@ -193,7 +186,7 @@
 	// build message getter methods
 	['data', 'subject', 'timestamp', 'uid'].forEach(function(key) {
 		(function(method, key) {
-			Message.prototype["get" + method] = function() {
+			Message.prototype['get' + method] = function() {
 				return this[key];
 			};
 		})(firstUp(key), key);
@@ -208,7 +201,7 @@
 	// Singleton and exposure
 	window.MessageHub = MessageHub = new Hub();
 	
-	// Allow creation of other instance
+	// Allow creation of new instances
 	MessageHub.instance = function() {
 		return new Hub();
 	};

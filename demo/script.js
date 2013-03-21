@@ -1,87 +1,47 @@
-var subscription = MessageHub.subscribe('test', function(subject, data) {
-		console.log(subject);
-	}),
-	dummyData = {
-		foo:'foo'
-	};
-
-// triggered
-MessageHub.publish('test', dummyData);
-
-// we pause the subscription
-subscription.pause();
-
-// not triggered
-MessageHub.publish('test', dummyData);
-
-// resume subscription
-subscription.resume();
-
-//triggered
-MessageHub.publish('test', dummyData);
-
-// replace the listener
-subscription.setListener(function() {
-	console.log('overwriten!');
-});
-
-MessageHub.publish('test', dummyData);
-
-// remove the listener
-subscription.remove();
-
-// nothing happens
-MessageHub.publish('test', dummyData);
-
-// set a new one
-subscription.setListener(function(subject, data) {
-	console.log(subject, data);
-});
-
-// but also set a new subject
-subscription.set('subject', 'new');
-
-// on old one nothing happen still
-MessageHub.emit('test', dummyData);
-
-// triggers on new one
-MessageHub.emit('new', dummyData);
-
-// one time listening
-MessageHub.once('once', function() {
-	console.log('once');
-});
-
-// should run only once
-MessageHub.emit('once');
-MessageHub.emit('once');
-
-// force all set listeners to be run with given subject and data
-MessageHub.spam('spam', {spam:true});
-
-// let's use before and after to filter the spam above :)
-subscription.before(function(subject) {
-	if (subject === 'spam') this.pause();
-})
-.after(function(subject) {
-	if (subject === 'spam') this.resume();
-});
-
-// spam wont trigger but new will
-MessageHub.spam('spam', {spam:true});
-MessageHub.emit('new', dummyData);
-
-console.log(MessageHub.instance());
-
-MessageHub.useMsgObj = true;
-
-MessageHub.once('once', function(msgObj) {
+var subscription = MessageHub.on("demo", function(msgObj) {
+	console.log(
+		"Subject: " + msgObj.getSubject() +
+		" fooStr: " + msgObj.getData().fooStr +
+		" Time: " + new Date(msgObj.getTimestamp()) +
+		" Subscription unique ID: " + msgObj.getUid()
+	);
 	console.log(msgObj);
 });
 
-MessageHub.emit('once', {once:true});
+MessageHub.emit("demo", {
+	fooStr: 'foo'
+});
 
+/*
 
+var str = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z';
+str += str.toUpperCase();
 
+var chars = str.split(',');
 
+chars.forEach(function(c, i) {
 
+	MessageHub.subscribe(c, function(data) {
+	
+		var div = document.createElement('div'),
+			a = document.createElement('a');
+		
+		a.href = "#";
+		a.innerText = data.subject;
+		a.onclick = function(ev) {
+			ev.preventDefault();
+			console.log(c);
+		};
+		div.appendChild(a);
+		document.body.appendChild(div);
+	});
+	
+	(function(c) {
+		setInterval(function() {
+			MessageHub.emit(c, {foo:c});
+		}, 1);
+	})(c);
+	
+});
+
+*/

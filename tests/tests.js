@@ -1,6 +1,6 @@
 test('Structure', function() {
 
-	expect(15);
+	expect(17);
 	
 	// check scope
 	ok(!window.Hub, 'Hub private');
@@ -16,13 +16,15 @@ test('Structure', function() {
 	ok(MessageHub.emit, 'MessageHub.emit');
 	ok(MessageHub.publishToAll, 'MessageHub.publishToAll');
 	ok(MessageHub.spam, 'MessageHub.spam');
+	ok(MessageHub.instance, 'MessageHub.instance');
+	ok(MessageHub._, 'MessageHub._');
 	
 	// check props
 	ok(MessageHub.subjects, 'MessageHub.spam');
-	ok(MessageHub._uid != undefined, 'MessageHub._uid');
+	ok(MessageHub.uid != undefined, 'MessageHub.uid');
 	
 	// check defauls
 	deepEqual(MessageHub.subjects, {}, 'MessageHub.spam');
-	equal(MessageHub._uid, 0, 'MessageHub._uid');
+	equal(MessageHub.uid, 0, 'MessageHub.uid');
 	
 });

@@ -187,7 +187,7 @@
 	alias(Subscription, 'after', 'post');
 	
 	// generate setter/getter for public properties only
-	['subject', 'listener', 'useMsgObj'].forEach(function(key) {
+	['subject', 'listener'].forEach(function(key) {
 	
 		(function(method, key) {
 

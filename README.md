@@ -24,9 +24,9 @@ Publish a message
 #### publishToAll / spam (subject, data)
 Publish a message to ALL listeners that are currently listening (subscription not paused)
 
-#### MessageHub.instance / MessageHub._
+#### instance / _
 
-Static method to allow the creation of new instances of the Hub.
+Method to allow the creation of new instances of the Hub.
 
 ### Subscription object
 

@@ -1,4 +1,4 @@
-(function(MessageHub) {
+(function() {
 
 	'use strict';
 
@@ -6,70 +6,68 @@
 		Private Hub object
 	*/
 	var Hub = function() {};
-	
+
 	extend(Hub.prototype, {
-		
+
 		subjects: {},
 		uid: 0,
-		useMsgObj: true,
-		
+
 		on: function(subject, listener, once) {
-	
+
 			var subscription;
-			
+
 			if (!this.subjects[subject]) this.subjects[subject] = [];
-			
+
 			subscription = new Subscription(subject, listener, this, once);
 			subscription._uid = this.uid++;
-			if (this.useMsgObj) subscription.useMsgObj = true;
-			
+
 			this.subjects[subject].push(subscription);
-			
+
 			return subscription;
 		},
-		
+
 		once: function(subject, listener) {
 			return this.on(subject, listener, true);
 		},
-		
+
 		un: function(subject, uid) {
-	
+
 			if (this.subjects[subject]) {
-			
+
 				if (!uid) {
 					this.subjects[subject] = null;
 					delete this.subjects[subject];
 					return;
 				};
-			
+
 				this.subjects[subject].forEach(function(item, i) {
 					if (item._uid === uid) items.splice(i, 1);
 				}, this);
-				
+
 				if (this.subjects[subject].length < 1) {
 					this.subjects[subject] = null;
 					delete this.subjects[subject];
 				};
 			};
 		},
-		
+
 		emit: function(subject, data) {
-	
+
 			if (this.subjects[subject]) {
 				this.subjects[subject].forEach(function(subscription) {
 					subscription.run(subject, data);
 				});
 			};
 		},
-		
+
 		spam: function(subject, data) {
-	
+
 			var ids = [];
-			
+
 			for (var sub in this.subjects) {
-			
+
 				this.subjects[sub].forEach(function(subscription) {
-				
+
 					if (!ids[subscription._uid]) {
 					
 						subscription.run(subject, data, true);
@@ -78,18 +76,18 @@
 				});
 			};
 		},
-		
+
 		_: function() {
 			return new Hub();
 		}
 	});
-	
+
 	alias(Hub, 'on', 'subscribe');
 	alias(Hub, 'un', 'unsubscribe');
 	alias(Hub, 'emit', 'publish');
 	alias(Hub, 'spam', 'publishToAll');
 	alias(Hub, '_', 'instance');
-	
+
 	/*
 		Private Subscription object
 	*/
@@ -99,59 +97,54 @@
 		this._once = once;
 		this._hub = hub;
 	};
-	
+
 	extend(Subscription.prototype, {
-		
-		useMsgObj: false,
-		
+
 		_listening: true,
 		_before: null,
 		_after: null,
 		_uid: null,
-	
+
 		execute: function(subject, data, force) {
-		
+
 			if (force || this.subject === subject) {
-				
+
 				if (this.listener && this._listening) {
-				
-					var args;
-				
-					if (this.useMsgObj) args = [new Message(subject, data, this._uid)];
-					else args = [subject, data]
-					
+
+					var args = [new Message(subject, data, this._uid)];
+
 					if (this._once) this._hub.un(subject, this.uid);
-					
+
 					if (this._before) this._before.apply(this, args);
-					
+
 					// we check again here as the before function could affect the properties
 					if (this.listener && this._listening) {
 						this.listener.apply(this, args);
 					};
-					
+
 					if (this._after) this._after.apply(this, args);
 				};
 			};
 		},
-		
+
 		before: function(fn) {
 			this._before = fn;
 			return this;
 		},
-		
+
 		after: function(fn) {
 			this._after = fn;
 			return this;
 		},
-		
+
 		remove: function() {
 			return this.setListener(null);
 		},
-		
+
 		toggle: function() {
 			this._listening = !this._listening;
 		},
-		
+
 		pause: function() {
 			this._listening = false;
 			return this;

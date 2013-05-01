@@ -345,7 +345,7 @@
 	['data', 'subject', 'timestamp', 'uid'].forEach(function(key) {
 		(function(method, key) {
 			Message.prototype['get' + method] = function() {
-				return privateData[key];
+				return this.get(key);
 			};
 		})(firstUp(key), key);
 	});

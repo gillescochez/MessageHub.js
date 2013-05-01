@@ -11,7 +11,7 @@ test('MessageHub Structure', function() {
 	ok(MessageHub.once, 'MessageHub.once');
 	ok(MessageHub.subscribe, 'MessageHub.subscribe');
 	ok(MessageHub.unsubscribe, 'MessageHub.unsubscribe');
-	ok(MessageHub.un, 'MessageHub.un');
+	ok(MessageHub.off, 'MessageHub.off');
 	ok(MessageHub.publish, 'MessageHub.publish');
 	ok(MessageHub.emit, 'MessageHub.emit');
 	ok(MessageHub.publishToAll, 'MessageHub.publishToAll');
@@ -22,15 +22,14 @@ test('MessageHub Structure', function() {
 	// check props and defaults
 	ok(MessageHub.subjects, 'MessageHub.subjects');
 	ok(MessageHub.uid != undefined, 'MessageHub.uid');
-	deepEqual(MessageHub.subjects, {}, 'MessageHub.subjects');
 	equal(MessageHub.uid, 0, 'MessageHub.uid');
 	
 });
 
 test('Subscription Structure', function() {
 
-	// use new insstance for each test
-	var Hub = window.MessageHub._(),
+	// use new instance for each test
+	var Hub = MessageHub._(),
 		listener = function(){},
 		subscription = Hub.on('test', listener);
 	
@@ -65,22 +64,46 @@ test('Subscription Structure', function() {
 test('Message structure', function() {
 
 	// use new insstance for each test
-	var Hub = window.MessageHub._(),
-		message,
-		subscription = Hub.on('test', function(msg) {
-			message = msg;
-		});
+	var Hub = MessageHub._();
+
+	Hub.on('test', function(message) {
+		ok(message, 'message defined');
+		ok(message.getData, 'message.getData');
+		ok(message.getSubject, 'message.getSubject');
+		ok(message.getUid, 'message.getUid');
+		ok(message.getTimestamp, 'message.getTimestamp');
+
+		equal(message.timestamp, undefined, 'timestamp is read only');
+		equal(message.data, undefined,'data is read only');
+		equal(message.subject, undefined, 'subject is read only');
+		equal(message.uid, undefined, 'uid is read only');
+
+		equal(message.getData(), null,'message.data');
+		equal(message.getSubject(), 'test', 'message.subject');
+		equal(message.getUid(), 0, 'message.uid');
+	});
 		
 	Hub.emit('test');
-	
-	ok(message, 'message defined');
-	ok(message.getData, 'message.getData');
-	ok(message.getSubject, 'message.getSubject');
-	ok(message.getUid, 'message.getUid');
-	ok(message.getTimestamp, 'message.getTimestamp');
-	ok(message.timestamp, 'message.timestamp');
-	equal(message.data, null,'message.data');
-	equal(message.subject, 'test', 'message.subject');
-	equal(message.uid, 0, 'message.uid');
+
+});
+
+test('Aliases', function() {
+
+	// use new insstance for each test
+	var hub = MessageHub._(),
+		subscription = hub.on('test', function() {});
+
+	deepEqual(hub.on, hub.subscribe, 'on => subscribe');
+	deepEqual(hub.off, hub.unsubscribe, 'off => unsubscribe');
+	deepEqual(hub.emit, hub.publish, 'emit => publish');
+	deepEqual(hub.spam, hub.publishToAll, 'spam => publishToAll');
+	deepEqual(hub._, hub.instance, '_ => instance');
+
+	deepEqual(subscription.remove, subscription.rm, 'remove => rm');
+	deepEqual(subscription.execute, subscription.run, 'execute => run');
+	deepEqual(subscription.resume, subscription.on, 'resume => on');
+	deepEqual(subscription.pause, subscription.off, 'pause => off');
+	deepEqual(subscription.before, subscription.pre, 'before => pre');
+	deepEqual(subscription.after, subscription.post, 'after => post');
 
 });
